@@ -87,7 +87,7 @@ with st.sidebar:
         "Modo de dibujo:",
         ("freedraw", "line", "rect", "circle", "transform", "polygon"),
         format_func=lambda x: {
-            "freedraw": "✏️️ Lápiz / Trazo Libre",
+            "freedraw": "✏ Lápiz / Trazo Libre",
             "line": "📏 Línea Recta",
             "rect": "⬛ Rectángulo",
             "circle": "⚪ Círculo",
@@ -142,15 +142,21 @@ with col_analysis:
     analyze_btn = st.button("🚀 Analizar Boceto de Moda")
 
     if analyze_btn:
-        # Verificación segura de canvas_result e image_data para evitar el RuntimeError
-        if canvas_result is not None and getattr(canvas_result, "image_data", None) is not None:
+        # Intentar acceder a image_data capturando explícitamente el RuntimeError
+        img_data = None
+        if canvas_result is not None:
             try:
-                # Convertir imagen del lienzo a objeto PIL
-                img_data = canvas_result.image_data.astype(np.uint8)
-                img = Image.fromarray(img_data)
+                img_data = canvas_result.image_data
+            except RuntimeError:
+                img_data = None
+
+        if img_data is not None:
+            try:
+                # Convertir imagen del lienzo a un arreglo NumPy
+                img_array = img_data.astype(np.uint8)
                 
-                # Verificar si se ha dibujado algo en el lienzo
-                if np.sum(img_data[:, :, :3] != 255) > 100 or np.sum(img_data[:, :, 3]) > 100:
+                # Verificar si se ha realizado algún dibujo
+                if np.sum(img_array[:, :, :3] != 255) > 100 or np.sum(img_array[:, :, 3]) > 100:
                     with st.spinner("🔍 Analizando trazos, textura y propuesta de moda..."):
                         
                         st.success("¡Boceto analizado con éxito!")
@@ -181,7 +187,7 @@ with col_analysis:
                         st.markdown("### 💡 Ocasiones de Uso & Trend Alert")
                         st.info("🔥 **Tendencia:** Este tipo de siluetas encaja con el concepto *Soft Utility* e ideal para eventos de coctel o moda prêt-à-porter.")
                 else:
-                    st.warning("⚠️ El lienzo parece estar en blanco. Realiza un dibujo en el tablero antes de presionar el botón de análisis.")
+                    st.warning("⚠️️ El lienzo parece estar en blanco. Realiza un dibujo en el tablero antes de presionar el botón de análisis.")
             except Exception as e:
                 st.error("Hubo un problema al procesar la imagen del lienzo. Intenta hacer un nuevo trazo en el tablero.")
         else:
