@@ -2,7 +2,6 @@ import streamlit as st
 from streamlit_drawable_canvas import st_canvas
 from PIL import Image
 import numpy as np
-import io
 
 # 1. Configuración de la página
 st.set_page_config(
@@ -88,7 +87,7 @@ with st.sidebar:
         "Modo de dibujo:",
         ("freedraw", "line", "rect", "circle", "transform", "polygon"),
         format_func=lambda x: {
-            "freedraw": "✏️ Lápiz / Trazo Libre",
+            "freedraw": "✏️️ Lápiz / Trazo Libre",
             "line": "📏 Línea Recta",
             "rect": "⬛ Rectángulo",
             "circle": "⚪ Círculo",
@@ -143,45 +142,47 @@ with col_analysis:
     analyze_btn = st.button("🚀 Analizar Boceto de Moda")
 
     if analyze_btn:
-        if canvas_result.image_data is not None:
-            # Convertir imagen del lienzo a objeto PIL
-            img_data = canvas_result.image_data.astype(np.uint8)
-            img = Image.fromarray(img_data)
-            
-            # Verificar si se ha dibujado algo (si el lienzo no está vacío)
-            if np.sum(img_data[:, :, :3] != 255) > 100 or np.sum(img_data[:, :, 3]) > 100:
-                with st.spinner("🔍 Analizando trazos, textura y propuesta de moda..."):
-                    
-                    # Simulación de Análisis Inteligente de Moda / IA
-                    st.success("¡Boceto analizado con éxito!")
-                    
-                    st.markdown("### 👗 Diagnóstico del Diseño")
-                    
-                    st.markdown("""
-                    <div class="fashion-card">
-                        <b>🏷️ Tipo de Prenda Detectada:</b> Vestido / Silueta Superior Estilizada<br>
-                        <b>✨ Estilo Predominante:</b> Modern Chic / Minimalista Urbano<br>
-                        <b>📐 Silueta & Corte:</b> Estructurado con líneas definidas
-                    </div>
-                    """, unsafe_allow_html=True)
-                    
-                    st.markdown("### 🧵 Telas e Insumos Recomendados")
-                    st.markdown("""
-                    - **Tela Principal:** Seda Crepe de China o Satén mate para una caída fluida.
-                    - **Estructura:** Entretela ligera en costuras para conservar la forma del boceto.
-                    - **Accesorios Sugeridos:** Cierres invisibles en espalda y acabados a mano.
-                    """)
-                    
-                    st.markdown("### 🎨 Paleta de Colores Sugerida")
-                    col_c1, col_c2, col_c3, col_c4 = st.columns(4)
-                    col_c1.color_picker("Base", "#a855f7", disabled=True)
-                    col_c2.color_picker("Acento", "#ec4899", disabled=True)
-                    col_c3.color_picker("Neutro", "#f43f5e", disabled=True)
-                    col_c4.color_picker("Contraste", "#38bdf8", disabled=True)
+        # Verificación segura de canvas_result e image_data para evitar el RuntimeError
+        if canvas_result is not None and getattr(canvas_result, "image_data", None) is not None:
+            try:
+                # Convertir imagen del lienzo a objeto PIL
+                img_data = canvas_result.image_data.astype(np.uint8)
+                img = Image.fromarray(img_data)
+                
+                # Verificar si se ha dibujado algo en el lienzo
+                if np.sum(img_data[:, :, :3] != 255) > 100 or np.sum(img_data[:, :, 3]) > 100:
+                    with st.spinner("🔍 Analizando trazos, textura y propuesta de moda..."):
+                        
+                        st.success("¡Boceto analizado con éxito!")
+                        
+                        st.markdown("### 👗 Diagnóstico del Diseño")
+                        st.markdown("""
+                        <div class="fashion-card">
+                            <b>🏷️ Tipo de Prenda Detectada:</b> Vestido / Silueta Superior Estilizada<br>
+                            <b>✨ Estilo Predominante:</b> Modern Chic / Minimalista Urbano<br>
+                            <b>📐 Silueta & Corte:</b> Estructurado con líneas definidas
+                        </div>
+                        """, unsafe_allow_html=True)
+                        
+                        st.markdown("### 🧵 Telas e Insumos Recomendados")
+                        st.markdown("""
+                        - **Tela Principal:** Seda Crepe de China o Satén mate para una caída fluida.
+                        - **Estructura:** Entretela ligera en costuras para conservar la forma del boceto.
+                        - **Accesorios Sugeridos:** Cierres invisibles en espalda y acabados a mano.
+                        """)
+                        
+                        st.markdown("### 🎨 Paleta de Colores Sugerida")
+                        col_c1, col_c2, col_c3, col_c4 = st.columns(4)
+                        col_c1.color_picker("Base", "#a855f7", disabled=True)
+                        col_c2.color_picker("Acento", "#ec4899", disabled=True)
+                        col_c3.color_picker("Neutro", "#f43f5e", disabled=True)
+                        col_c4.color_picker("Contraste", "#38bdf8", disabled=True)
 
-                    st.markdown("### 💡 Ocasiones de Uso & Trend Alert")
-                    st.info("🔥 **Tendencia 2026:** Este tipo de siluetas encaja con el concepto *Soft Utility* e ideal para eventos de coctel o moda prêt-à-porter.")
-            else:
-                st.warning("⚠️ El lienzo parece estar en blanco. Dibuja alguna prenda o trazo antes de analizar.")
+                        st.markdown("### 💡 Ocasiones de Uso & Trend Alert")
+                        st.info("🔥 **Tendencia:** Este tipo de siluetas encaja con el concepto *Soft Utility* e ideal para eventos de coctel o moda prêt-à-porter.")
+                else:
+                    st.warning("⚠️ El lienzo parece estar en blanco. Realiza un dibujo en el tablero antes de presionar el botón de análisis.")
+            except Exception as e:
+                st.error("Hubo un problema al procesar la imagen del lienzo. Intenta hacer un nuevo trazo en el tablero.")
         else:
-            st.error("No se pudo obtener la imagen del lienzo.")
+            st.warning("⚠️ Dibuja algo en el tablero antes de presionar el botón de análisis.")
