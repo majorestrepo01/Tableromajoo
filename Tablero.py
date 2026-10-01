@@ -142,7 +142,14 @@ with col_analysis:
     analyze_btn = st.button("🚀 Analizar Boceto de Moda")
 
     if analyze_btn:
-        # Intentar acceder a image_data capturando explícitamente el RuntimeError
+        # 1. Verificar si hay trazados en el JSON del lienzo
+        has_drawings = False
+        if canvas_result is not None and canvas_result.json_data is not None:
+            objects = canvas_result.json_data.get("objects", [])
+            if len(objects) > 0:
+                has_drawings = True
+
+        # 2. Intentar obtener la imagen del lienzo de forma segura
         img_data = None
         if canvas_result is not None:
             try:
@@ -150,45 +157,36 @@ with col_analysis:
             except RuntimeError:
                 img_data = None
 
-        if img_data is not None:
-            try:
-                # Convertir imagen del lienzo a un arreglo NumPy
-                img_array = img_data.astype(np.uint8)
+        # 3. Procesar si hay dibujos detectados
+        if has_drawings or (img_data is not None and np.any(img_data)):
+            with st.spinner("🔍 Analizando trazos, textura y propuesta de moda..."):
                 
-                # Verificar si se ha realizado algún dibujo
-                if np.sum(img_array[:, :, :3] != 255) > 100 or np.sum(img_array[:, :, 3]) > 100:
-                    with st.spinner("🔍 Analizando trazos, textura y propuesta de moda..."):
-                        
-                        st.success("¡Boceto analizado con éxito!")
-                        
-                        st.markdown("### 👗 Diagnóstico del Diseño")
-                        st.markdown("""
-                        <div class="fashion-card">
-                            <b>🏷️ Tipo de Prenda Detectada:</b> Vestido / Silueta Superior Estilizada<br>
-                            <b>✨ Estilo Predominante:</b> Modern Chic / Minimalista Urbano<br>
-                            <b>📐 Silueta & Corte:</b> Estructurado con líneas definidas
-                        </div>
-                        """, unsafe_allow_html=True)
-                        
-                        st.markdown("### 🧵 Telas e Insumos Recomendados")
-                        st.markdown("""
-                        - **Tela Principal:** Seda Crepe de China o Satén mate para una caída fluida.
-                        - **Estructura:** Entretela ligera en costuras para conservar la forma del boceto.
-                        - **Accesorios Sugeridos:** Cierres invisibles en espalda y acabados a mano.
-                        """)
-                        
-                        st.markdown("### 🎨 Paleta de Colores Sugerida")
-                        col_c1, col_c2, col_c3, col_c4 = st.columns(4)
-                        col_c1.color_picker("Base", "#a855f7", disabled=True)
-                        col_c2.color_picker("Acento", "#ec4899", disabled=True)
-                        col_c3.color_picker("Neutro", "#f43f5e", disabled=True)
-                        col_c4.color_picker("Contraste", "#38bdf8", disabled=True)
+                st.success("¡Boceto analizado con éxito!")
+                
+                st.markdown("### 👗 Diagnóstico del Diseño")
+                st.markdown("""
+                <div class="fashion-card">
+                    <b>🏷️ Tipo de Prenda Detectada:</b> Vestido / Silueta Superior Estilizada<br>
+                    <b>✨ Estilo Predominante:</b> Modern Chic / Minimalista Urbano<br>
+                    <b>📐 Silueta & Corte:</b> Estructurado con líneas definidas
+                </div>
+                """, unsafe_allow_html=True)
+                
+                st.markdown("### 🧵 Telas e Insumos Recomendados")
+                st.markdown("""
+                - **Tela Principal:** Seda Crepe de China o Satén mate para una caída fluida.
+                - **Estructura:** Entretela ligera en costuras para conservar la forma del boceto.
+                - **Accesorios Sugeridos:** Cierres invisibles en espalda y acabados a mano.
+                """)
+                
+                st.markdown("### 🎨 Paleta de Colores Sugerida")
+                col_c1, col_c2, col_c3, col_c4 = st.columns(4)
+                col_c1.color_picker("Base", "#a855f7", disabled=True)
+                col_c2.color_picker("Acento", "#ec4899", disabled=True)
+                col_c3.color_picker("Neutro", "#f43f5e", disabled=True)
+                col_c4.color_picker("Contraste", "#38bdf8", disabled=True)
 
-                        st.markdown("### 💡 Ocasiones de Uso & Trend Alert")
-                        st.info("🔥 **Tendencia:** Este tipo de siluetas encaja con el concepto *Soft Utility* e ideal para eventos de coctel o moda prêt-à-porter.")
-                else:
-                    st.warning("⚠️️ El lienzo parece estar en blanco. Realiza un dibujo en el tablero antes de presionar el botón de análisis.")
-            except Exception as e:
-                st.error("Hubo un problema al procesar la imagen del lienzo. Intenta hacer un nuevo trazo en el tablero.")
+                st.markdown("### 💡 Ocasiones de Uso & Trend Alert")
+                st.info("🔥 **Tendencia:** Este tipo de siluetas encaja con el concepto *Soft Utility* e ideal para eventos de coctel o moda prêt-à-porter.")
         else:
-            st.warning("⚠️ Dibuja algo en el tablero antes de presionar el botón de análisis.")
+            st.warning("⚠️ El lienzo parece estar en blanco. Realiza un dibujo en el tablero antes de presionar el botón de análisis.")
